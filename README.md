@@ -2,7 +2,7 @@
 
 ## 岡本地区マップ / Kidssafe MAP in Okamoto
 
-- https://code4fukui.github.io/okamtoo/
+- https://code4fukui.github.io/okamoto/
 
 ## オープンデータ CC BY
 
