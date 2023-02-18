@@ -54,6 +54,8 @@
         const url = n[1];
         const cap = n[2];
         td.innerHTML = `<a href=${url}>${cap}</a>`;
+      } else if (val.startsWith("https://")) {
+        td.innerHTML = `<a href=${val}>詳細</a>`;
       } else {
         td.textContent = val;
       }
@@ -194,9 +196,17 @@
       maxZoom: 18,
     }).addTo(map);
 
+    const getPos = (d) => {
+      const pos = Geo3x3.decode(d.Geo3x3 || d.geo3x3);
+      if (pos) {
+        return [pos.lat, pos.lng];
+      }
+      return [d.lat || d.緯度, d.lng || d.経度];
+    };
+
     const lls = [];
-    const showIcons = async (list, icon0) => {
-      const icon = "./icon/" + icon0;
+    const showIcons = async (list, icon) => {
+      //const icon = "./icon/" + icon0;
       const iconlayer = L.layerGroup();
       iconlayer.addTo(map);
       const opt = {};
@@ -216,14 +226,7 @@
         console.log("can't load: " + icon);
       }
       for (const d of list) {
-        const getPos = () => {
-          const pos = Geo3x3.decode(d.Geo3x3 || d.geo3x3);
-          if (pos) {
-            return [pos.lat, pos.lng];
-          }
-          return [d.lat, d.lng];
-        };
-        const ll = getPos();
+        const ll = getPos(d);
         const marker = L.marker(ll, opt);
         const tbl = makeTable(d);
         tbl.className = "mapinfo";
@@ -237,8 +240,7 @@
       const iconlayer = L.layerGroup();
       iconlayer.addTo(map);
       for (const d of list) {
-        const pos = Geo3x3.decode(d.Geo3x3 || d.geo3x3);
-        const ll = [pos.lat, pos.lng];
+        const ll = getPos(d);
         //const ll = [d.lat, d.lng];
         const marker = L.circle(ll, {
           radius: 2,
@@ -267,12 +269,23 @@
     //
     const layers = [];
 
-    // 地域情報
-    const list4 = CSV.toJSON(await CSV.fetchUtf8("./point.csv"));
-    layers.push(["地域情報", await showPoints(list4, "#f00")]);
+    { // 地域情報
+      const list = CSV.toJSON(await CSV.fetchUtf8("./point.csv"));
+      //layers.push(["地域情報", await showPoints(list, "#f00")]);
+      layers.push(["地域情報", await showIcons(list)]);
+    }
 
     if (lls.length) {
       map.fitBounds(lls);
+    }
+
+    { // 世界記録チャレンジ
+      const list = CSV.toJSON(await CSV.fetchUtf8("https://code4fukui.github.io/worldsrecords-challenge/data.csv"));
+      layers.push(["世界記録チャレンジ", await showIcons(list, "https://code4fukui.github.io/worldsrecords-challenge/image/icon.png")]);
+    }
+    { // デザインマンホール
+      const list = CSV.toJSON(await CSV.fetchUtf8("https://code4fukui.github.io/design-manhole-map/data.csv"));
+      layers.push(["デザインマンホール", await showIcons(list, "https://code4fukui.github.io/worldsrecords-challenge/image/icon.png")]);
     }
 
     // レイヤー選択
